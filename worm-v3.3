@@ -1,0 +1,191 @@
+#! /usr/bin/bash
+
+
+
+# k to stixio tou skoulikou.
+# k=1 to kefali. k=l i oura.
+# x[k],y[k] oi sintetagmenes tou stixiou k. 
+# dx,dy i metavoli 8esis tou kefaliou se xrono term.
+# dr i strofi. dr=-1 strofi deksia. dr=1 strofi aristera. dr=0 synexizei isia.
+
+
+#==========================================================#
+#        F U N C T I O N    D E C L A R A T I O N S        #
+#==========================================================#
+
+
+function xediplwma()
+{
+  ((k=1));
+  while ((k<=l)); do
+    ((x[k]=x0));
+    ((y[k]=y0));
+    ((k++));
+  done;
+}
+
+
+
+
+
+function strofi()
+{
+  ((dr=($RANDOM%(2*rf+1)-rf)/rf));   #to dr=sin(da)= 1 | 0 | -1  ==> cos(da) = sqrt(1-dr^2) = 1-dr^2
+  ((dx=(1-dr*dr)*dxold-dr*dyold));   #dx=cos(a + da)=...
+  ((dy=dr*dxold+(1-dr*dr)*dyold));   #dy=sin(a + da)=...
+  ((dxold=dx));
+  ((dyold=dy));
+}
+
+
+
+
+
+function skouliki()
+{
+# swma plin kefali
+
+  ((xlold=x[l]));
+  ((ylold=y[l]));
+  ((k=l));
+  while ((k!=1)); do
+    ((x[k]=x[k-1]));
+    ((y[k]=y[k-1]));
+    ((k--));
+  done;
+
+# kefali
+
+  ((x[1]=(x[1]+dx)%xsize));
+  ((y[1]=(y[1]+dy)%ysize));
+  if ((x[1]==0)); then ((x[1]=xsize)); fi;
+  if ((y[1]==0)); then ((y[1]=ysize)); fi;
+}
+
+
+
+
+function typwsi_skoulikiou()
+{
+  echo -e "\e[1;32m\e[$((y[1]+1));$((x[1]+1))f$h\e[0m";  # typwsi neou kefaliou 
+  echo -e "\e[$((ylold+1));$((xlold+1))f ";             # afairesi palias ouras
+
+  ((k=2));                                              # allagi xrwmatos tou paliou kefaliou. 
+  while ((k<=l)); do                                    # epi ti eukairia ksanatipwnw meros tou
+    echo -e "\e[1;33m\e[$((y[k]+1));$((x[k]+1))f$b\e[0m";  # skoulikiou wste
+    ((k++));                                            # an perasei panw apo ton eauto tou
+  done;                                                 # na mi meinei trypa.
+  echo -en "\e[$((ysize+2));$((xsize+2))f ";            # katevazw to prompt katw aristera.
+}
+
+
+
+
+function typwsi_trapeziou() 
+{
+  clear;
+  ((k=2)); 
+  while ((k<=$ysize+1)); do
+     printf "\e[1;31m\e[$((k));1f|";
+     printf "\e[1;31m\e[$((k));$((xsize+2))f|";
+     ((k++));
+  done;
+  ((k=2));
+  while ((k<=xsize+1)); do
+     printf "\e[1;31m\e[1;$((k))f-";
+     printf "\e[1;31m\e[$((ysize+2));$((k))f-";
+     ((k++)); 
+  done;
+}
+
+
+
+
+
+function window_resize_responce()
+{
+  if ((xsize!= (`tput cols` -2) | ysize!=(`tput lines` -2))); 
+  then 
+    ((xsize=`tput cols` -2));  
+    ((ysize=`tput lines` -2));
+    typwsi_trapeziou;
+    if ((xsize<=x[1])); 
+      then ((x0=xsize));
+      else ((x0=x[1]));
+    fi;
+    if ((ysize<=y[1])); 
+      then ((y0=ysize));
+      else ((y0=y[1]));
+    fi;
+    xediplwma;
+  fi;
+}
+
+
+
+
+#========================================================#
+#        E N D    O F    D E C L A R A T I O N S         #
+#========================================================#
+
+
+# parametroi
+
+((l=12));         #mikos skoulikiou
+((xsize=`tput cols` -2));     #mege8os gipedou. den symperilamvanontai
+((ysize=`tput lines` -2));     #..ta oria.
+term=0.07;       #periodos kare
+((rf=5));        #sintelestis tixaiotitas. 
+                 #gia rf=1 to skouliki strivi deksia i aristera i den strivi
+                 #se ises pi8anotites 
+((x0=xsize/2, y0=ysize/2));   # arxiki 8esi skoulikiou
+((dxold=0));                  # arxiki taxitita
+((dyold=1));                  #  ---/--/--/--- 
+b="*";
+h="*";
+
+while :
+do
+  case $1 in
+    -s | --speed)
+      term=$2;
+      shift 2;
+      ;;
+    -rf)
+      rf=$2;
+      shift 2;
+      ;;
+    -l | --length)
+      l=$2;
+      shift 2;
+      ;;
+    -b | --body)
+      b="$2"
+      shift 2;
+      ;;
+    -h | --head)
+      h="$2";
+      shift 2;
+      ;;
+     *)
+     break
+     ;;
+  esac;
+done 
+
+typwsi_trapeziou 
+xediplwma
+
+# kyrios broxos programmatos
+
+while ((1)); do
+  window_resize_responce;
+  strofi;
+  skouliki;
+  typwsi_skoulikiou;
+  sleep $term;
+done
+
+
+
+
