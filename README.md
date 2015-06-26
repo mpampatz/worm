@@ -1,4 +1,4 @@
 worm
 ====
 
-A bash worm moving randomly
+Brownian worm ...Bashed
